@@ -1,0 +1,4 @@
+enum ShippingType {
+  SHIPPING,
+  DELIVERY
+}
