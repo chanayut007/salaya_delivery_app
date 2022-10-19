@@ -1,14 +1,15 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:salaya_delivery_app/core/constants/color_constant.dart';
 
 class RecommendItem extends StatelessWidget {
 
-  final String imagePath;
+  final String? imagePath;
   final String name;
-  final double price;
+  final String price;
   final Function() onClick;
 
-  const RecommendItem({Key? key, required this.imagePath, required this.name, required this.price, required this.onClick}) : super(key: key);
+  const RecommendItem({Key? key, this.imagePath, required this.name, required this.price, required this.onClick}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -34,38 +35,69 @@ class RecommendItem extends StatelessWidget {
             children: [
               Expanded(
                 flex: 3,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    image: DecorationImage(
-                      image: AssetImage(imagePath),
-                      fit: BoxFit.cover
-                    )
-                  ),
+                child: Builder(
+                  builder: (context) {
+                    if (imagePath != null) {
+                      return CachedNetworkImage(
+                        imageUrl: imagePath!,
+                        imageBuilder: (context, imageProvider) => Container(
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              image: DecorationImage(
+                                  image: imageProvider,
+                                  fit: BoxFit.cover
+                              )
+                          ),
+                        ),
+                        placeholder: (context, url) => const Center(child: CircularProgressIndicator(),),
+                        errorWidget: (context, url, error) => Container(
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              image: const DecorationImage(
+                                  image: AssetImage('assets/images/logo.png'),
+                                  fit: BoxFit.cover
+                              )
+                          ),
+                        ),
+                      );
+                    }
+                    return Container(
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          image: const DecorationImage(
+                              image: AssetImage('assets/images/logo.png'),
+                              fit: BoxFit.cover
+                          )
+                      ),
+                    );
+                  },
                 )
               ),
+              const SizedBox(height: 8,),
               Expanded(
                   flex: 1,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Align(
                           child: Text(
                             name,
-                            style: _textTheme.bodyText1,
-                            textAlign: TextAlign.center,
+                            style: _textTheme.subtitle1?.copyWith(fontSize: 10),
+                            textAlign: TextAlign.start,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          alignment: Alignment.centerLeft,
+                          alignment: Alignment.topLeft,
                         ),
                         Align(
-                          alignment: Alignment.centerLeft,
+                          alignment: Alignment.bottomLeft,
                           child: RichText(
                               text: TextSpan(
-                                  text: '$price',
-                                  style: _textTheme.headline1?.copyWith(fontSize: 20, color: ColorConstant.blue),
+                                  text: price,
+                                  style: _textTheme.headline1?.copyWith(fontSize: 15, color: ColorConstant.blue),
                                   children: [
                                     TextSpan(
                                       text: ' บาท',

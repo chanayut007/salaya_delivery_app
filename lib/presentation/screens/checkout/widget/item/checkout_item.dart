@@ -1,16 +1,18 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:salaya_delivery_app/core/constants/color_constant.dart';
+import 'package:salaya_delivery_app/presentation/utils/number_format_extension.dart';
 
 class CheckoutItem extends StatelessWidget {
 
-  final String imagePath;
+  final String? imagePath;
   final String title;
-  final String price;
+  final double price;
   final int count;
 
   const CheckoutItem({
     Key? key,
-    required this.imagePath,
+    this.imagePath,
     required this.title,
     required this.price,
     required this.count
@@ -26,11 +28,46 @@ class CheckoutItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Image(
-            image: AssetImage(imagePath),
+          SizedBox(
             width: 60,
             height: 60,
-            fit: BoxFit.cover,
+            child: Builder(
+              builder: (context) {
+                if (imagePath != null) {
+                  return CachedNetworkImage(
+                    imageUrl: imagePath!,
+                    imageBuilder: (context, imageProvider) => Container(
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          image: DecorationImage(
+                              image: imageProvider,
+                              fit: BoxFit.cover
+                          )
+                      ),
+                    ),
+                    placeholder: (context, url) => const Center(child: CircularProgressIndicator(),),
+                    errorWidget: (context, url, error) => Container(
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          image: const DecorationImage(
+                              image: AssetImage('assets/images/logo.png'),
+                              fit: BoxFit.cover
+                          )
+                      ),
+                    ),
+                  );
+                }
+                return Container(
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      image: const DecorationImage(
+                          image: AssetImage('assets/images/logo.png'),
+                          fit: BoxFit.cover
+                      )
+                  ),
+                );
+              },
+            ),
           ),
           const SizedBox(width: 8,),
           Expanded(
@@ -44,7 +81,7 @@ class CheckoutItem extends StatelessWidget {
             children: [
               RichText(
                 text: TextSpan(
-                    text: price,
+                    text: generatePrice(price * count),
                     style: _textTheme.bodyText1?.copyWith(fontSize: 16, color: ColorConstant.blue),
                     children: [
                       TextSpan(

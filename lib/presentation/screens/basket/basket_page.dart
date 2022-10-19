@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:salaya_delivery_app/core/constants/color_constant.dart';
+import 'package:salaya_delivery_app/data/models/basket_object.dart';
+import 'package:salaya_delivery_app/data/models/response/product.dart';
 import 'package:salaya_delivery_app/data/models/shipping_type.dart';
+import 'package:salaya_delivery_app/logic/bloc/basket/basket_bloc.dart';
 import 'package:salaya_delivery_app/presentation/router/route_manager.dart';
 import 'package:salaya_delivery_app/presentation/screens/basket/widget/basket_item.dart';
 import 'package:salaya_delivery_app/presentation/utils/custom_appbar.dart';
+import 'package:salaya_delivery_app/presentation/utils/function_basket.dart';
+import 'package:salaya_delivery_app/presentation/utils/number_format_extension.dart';
 
 class BasketPage extends StatefulWidget {
   const BasketPage({Key? key}) : super(key: key);
@@ -44,25 +50,33 @@ class _BasketPageState extends State<BasketPage> {
         children: [
 
           Positioned.fill(
-            child: ListView.separated(
-              physics: const BouncingScrollPhysics(),
-              itemCount: 20,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: EdgeInsets.only(top: (index == 0) ? 32 : 0, bottom: (index == 19) ? 150 : 0, left: 16, right: 16),
-                  child: BasketItem(
-                    imagePath: 'assets/images/y1.png',
-                    title: 'ยาเม็ดซาร่า (10 เม็ด)',
-                    price: 12,
-                    count: 1,
-                    onClickRemove: () => showDialogAlertDelete(context, 'ยาเม็ดซาร่า (10 เม็ด)'),
-                    onClickDecrease: (){},
-                    onClickIncrease: (){}
-                  )
-                );
-              },
-              separatorBuilder: (context, index) => const SizedBox(height: 16,),
-            ),
+            child: BlocBuilder<BasketBloc, BasketState>(
+              builder: (context, state) {
+                if (state is BasketLoaded) {
+                  return ListView.separated(
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: state.items.length,
+                    itemBuilder: (context, index) {
+                      BasketObject basket = state.items[index];
+                      return Padding(
+                          padding: EdgeInsets.only(top: (index == 0) ? 32 : 0, bottom: (index == 19) ? 150 : 0, left: 16, right: 16),
+                          child: BasketItem(
+                              imagePath: basket.product.images,
+                              title: basket.product.productName,
+                              price: basket.product.pricePerUnit,
+                              count: basket.qty,
+                              onClickRemove: () => showDialogAlertDelete(context, basket.product),
+                              onClickDecrease: () => context.read<BasketBloc>().add(DecreaseBasket(product: basket.product)),
+                              onClickIncrease: () => context.read<BasketBloc>().add(IncreaseBasket(product: basket.product))
+                          )
+                      );
+                    },
+                    separatorBuilder: (context, index) => const SizedBox(height: 16,),
+                  );
+                }
+                return const Center(child: CircularProgressIndicator(),);
+              }
+            )
           ),
 
           Positioned(
@@ -106,26 +120,54 @@ class _BasketPageState extends State<BasketPage> {
                           )
                         ],
                       ),
-                      RichText(
-                        text: TextSpan(
-                          text: '12.00',
-                          style: _textTheme.subtitle1?.copyWith(fontSize: 28, color: ColorConstant.blue),
-                          children: [
-                            TextSpan(
-                              text: '  บาท',
-                              style: _textTheme.subtitle1?.copyWith(fontSize: 14, color: ColorConstant.black)
-                            )
-                          ]
-                        ),
+                      BlocBuilder<BasketBloc, BasketState>(
+                        builder: (context, state) {
+                          if (state is BasketLoaded) {
+                            return FittedBox(
+                              child: RichText(
+                                text: TextSpan(
+                                    text: generateCurrencyFormat(getTotalPriceInBasket(baskets: state.items)),
+                                    style: _textTheme.subtitle1?.copyWith(fontSize: 28, color: ColorConstant.blue),
+                                    children: [
+                                      TextSpan(
+                                          text: '  บาท',
+                                          style: _textTheme.subtitle1?.copyWith(fontSize: 14, color: ColorConstant.black)
+                                      )
+                                    ]
+                                ),
+                              ),
+                            );
+                          }
+                          return const Center(child: CircularProgressIndicator(),);
+                        }
                       )
+
                     ],
                   ),
-                  ElevatedButton(
-                    onPressed: () => showDialogSelectShipping(context),
-                    child: const Text(
-                      "ซื้อสินค้า"
-                    )
-                  )
+                  BlocBuilder<BasketBloc, BasketState>(
+                    builder: (context, state) {
+                      if (state is BasketLoaded) {
+                        if (state.items.isNotEmpty) {
+                          return ElevatedButton(
+                              onPressed: () => showDialogSelectShipping(context),
+                              child: const Text(
+                                  "ซื้อสินค้า"
+                              )
+                          );
+                        }
+                        else {
+                          return ElevatedButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text(
+                                  "กลับไปหน้าซื้อสินค้า"
+                              )
+                          );
+                        }
+                      }
+                      return const SizedBox();
+                    }
+                  ),
+
                 ],
               ),
             ),
@@ -167,7 +209,7 @@ class _BasketPageState extends State<BasketPage> {
     );
   }
 
-  Future<void> showDialogAlertDelete(BuildContext context, String title) async {
+  Future<void> showDialogAlertDelete(BuildContext context, Product product) async {
     TextTheme _textTheme = Theme.of(context).textTheme;
     await showDialog(
         context: context,
@@ -181,7 +223,7 @@ class _BasketPageState extends State<BasketPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                title,
+                product.productName,
                 style: _textTheme.headline1?.copyWith(fontSize: 16, color: ColorConstant.blue),
                 maxLines: 2,
                 textAlign: TextAlign.center,
@@ -204,6 +246,7 @@ class _BasketPageState extends State<BasketPage> {
             TextButton(
                 onPressed: (){
                   Navigator.of(context).pop();
+                  context.read<BasketBloc>().add(RemoveBasket(product: product));
                 },
                 child: Text(
                   "ยืนยัน",

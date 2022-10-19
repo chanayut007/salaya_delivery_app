@@ -1,12 +1,16 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:salaya_delivery_app/core/constants/color_constant.dart';
+import 'package:salaya_delivery_app/logic/bloc/basket/basket_bloc.dart';
 import 'package:salaya_delivery_app/presentation/screens/basket/widget/count_by_item.dart';
+import 'package:salaya_delivery_app/presentation/utils/number_format_extension.dart';
 
 
 class BasketItem extends StatefulWidget {
 
-  final String imagePath;
+  final String? imagePath;
   final String title;
   final double price;
   final int count;
@@ -31,7 +35,7 @@ class BasketItem extends StatefulWidget {
 
 class _BasketItemState extends State<BasketItem> {
 
-  final _countKey = GlobalKey<CountByItemWidgetState>();
+  // final _countKey = GlobalKey<CountByItemWidgetState>();
 
   @override
   void initState() {
@@ -61,15 +65,45 @@ class _BasketItemState extends State<BasketItem> {
         child: Row(
           children: [
             const SizedBox(width: 8,),
-            Container(
+            SizedBox(
               width: 100,
               height: 100,
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  image: DecorationImage(
-                      image: AssetImage(widget.imagePath),
-                      fit: BoxFit.cover
-                  )
+              child: Builder(
+                builder: (context) {
+                  if (widget.imagePath != null) {
+                    return CachedNetworkImage(
+                      imageUrl: widget.imagePath!,
+                      imageBuilder: (context, imageProvider) => Container(
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            image: DecorationImage(
+                                image: imageProvider,
+                                fit: BoxFit.cover
+                            )
+                        ),
+                      ),
+                      placeholder: (context, url) => const Center(child: CircularProgressIndicator(),),
+                      errorWidget: (context, url, error) => Container(
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            image: const DecorationImage(
+                                image: AssetImage('assets/images/logo.png'),
+                                fit: BoxFit.cover
+                            )
+                        ),
+                      ),
+                    );
+                  }
+                  return Container(
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        image: const DecorationImage(
+                            image: AssetImage('assets/images/logo.png'),
+                            fit: BoxFit.cover
+                        )
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(width: 8,),
@@ -85,12 +119,16 @@ class _BasketItemState extends State<BasketItem> {
                                 child: Text(
                                   widget.title,
                                   style: _textTheme.bodyText1?.copyWith(fontSize: 14),
-                                  maxLines: 3,
+                                  maxLines: 2,
                                   textAlign: TextAlign.start,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 alignment: Alignment.centerLeft,
                               ),
                             ),
+
+                            const SizedBox(width: 16,),
+
                             Align(
                               alignment: Alignment.topRight,
                               child: GestureDetector(
@@ -114,7 +152,7 @@ class _BasketItemState extends State<BasketItem> {
                             Expanded(
                               child: RichText(
                                 text: TextSpan(
-                                    text: '${widget.price * widget.count}',
+                                    text: generatePrice(widget.price * widget.count),
                                     style: _textTheme.subtitle1?.copyWith(fontSize: 28, color: ColorConstant.blue),
                                     children: [
                                       TextSpan(
@@ -126,75 +164,12 @@ class _BasketItemState extends State<BasketItem> {
                               ),
                             ),
 
-                            CountByItemWidget(
-                              key: _countKey,
+                            CountItemInBasketWidget(
                               onClickIncrease: widget.onClickIncrease,
-                              onClickDecrease: widget.onClickDecrease
-                            )
-
-                            // SizedBox(
-                            //   child: Row(
-                            //     mainAxisAlignment: MainAxisAlignment.center,
-                            //     children: [
-                            //       GestureDetector(
-                            //         onTap: (count > 1) ? onClickMinus : null,
-                            //         child: Opacity(
-                            //           opacity: (count > 1) ? 1 : 0.2,
-                            //           child: Container(
-                            //             width: 20,
-                            //             height: 20,
-                            //             decoration: BoxDecoration(
-                            //                 shape: BoxShape.circle,
-                            //                 image: const DecorationImage(
-                            //                   image: AssetImage('assets/icons/ic_minus.png'),
-                            //                 ),
-                            //                 boxShadow: [
-                            //                   BoxShadow(
-                            //                       offset: const Offset(0, 0),
-                            //                       blurRadius: 3,
-                            //                       color: Colors.grey.shade400
-                            //                   )
-                            //                 ]
-                            //             ),
-                            //           ),
-                            //         )
-                            //       ),
-                            //       const SizedBox(width: 16,),
-                            //       SizedBox(
-                            //         width: 20,
-                            //         height: 30,
-                            //         child: FittedBox(
-                            //           child: Text(
-                            //             '$count',
-                            //             style: _textTheme.subtitle1?.copyWith(fontSize: 32),
-                            //           ),
-                            //         ),
-                            //       ),
-                            //       const SizedBox(width: 16,),
-                            //       GestureDetector(
-                            //         onTap: onClickPlus,
-                            //         child: Container(
-                            //           width: 20,
-                            //           height: 20,
-                            //           decoration: BoxDecoration(
-                            //               shape: BoxShape.circle,
-                            //               image: const DecorationImage(
-                            //                 image: AssetImage('assets/icons/ic_plus.png'),
-                            //               ),
-                            //               boxShadow: [
-                            //                 BoxShadow(
-                            //                     offset: const Offset(0, 0),
-                            //                     blurRadius: 3,
-                            //                     color: Colors.grey.shade400
-                            //                 )
-                            //               ]
-                            //           ),
-                            //         ),
-                            //       ),
-                            //
-                            //     ],
-                            //   ),
-                            // )
+                              onClickDecrease: widget.onClickDecrease,
+                              count: widget.count,
+                            ),
+                            
                           ],
                         )
                     ),

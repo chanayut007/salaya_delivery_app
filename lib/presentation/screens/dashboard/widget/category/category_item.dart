@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 
 class CategoryItem extends StatelessWidget {
 
-  final Function() onClick;
+  final Function()? onClick;
   final String imagePath;
   final String title;
 
-  const CategoryItem({Key? key, required this.imagePath, required this.title, required this.onClick}) : super(key: key);
+  const CategoryItem({
+    Key? key,
+    required this.imagePath,
+    required this.title,
+    required this.onClick,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

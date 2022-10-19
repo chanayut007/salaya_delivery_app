@@ -1,55 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:salaya_delivery_app/core/constants/color_constant.dart';
 
-class CountItemWidget extends StatefulWidget {
+class ProductDetailCountItemInBasketWidget extends StatefulWidget {
 
   final Function() onClickIncrease;
   final Function() onClickDecrease;
   final int count;
 
-  const CountItemWidget({Key? key, required this.onClickIncrease, required this.onClickDecrease, this.count = 1}) : super(key: key);
+  const ProductDetailCountItemInBasketWidget({Key? key, required this.onClickIncrease, required this.onClickDecrease, this.count = 1}) : super(key: key);
 
   @override
-  State<CountItemWidget> createState() => CountItemWidgetState();
+  State<ProductDetailCountItemInBasketWidget> createState() => _ProductDetailCountItemInBasketWidget();
 }
 
-class CountItemWidgetState extends State<CountItemWidget> {
-
-  int count = 1;
-
-  void increase() {
-    setState(() {
-      count = count + 1;
-    });
-  }
-
-  void decrease() {
-    setState(() {
-      count = count - 1;
-    });
-  }
-
-  void setBasketCount(int basketCount) {
-    setState(() {
-      count = basketCount;
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    SchedulerBinding.instance!.addPostFrameCallback((_) {
-      setCountInBasket(widget.count);
-    });
-  }
-
-  void setCountInBasket(int basketCount) {
-    setState(() {
-      count = basketCount;
-    });
-  }
-
+class _ProductDetailCountItemInBasketWidget extends State<ProductDetailCountItemInBasketWidget> {
   @override
   Widget build(BuildContext context) {
 
@@ -61,12 +25,11 @@ class CountItemWidgetState extends State<CountItemWidget> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           GestureDetector(
-            onTap: (count > 1) ? () {
-              decrease();
+            onTap: (widget.count > 1) ? () {
               widget.onClickDecrease();
             } : null,
             child: Opacity(
-              opacity: (count > 1) ? 1 : 0.4,
+              opacity: (widget.count > 1) ? 1 : 0.4,
               child: Container(
                 width: 45,
                 height: 45,
@@ -92,7 +55,7 @@ class CountItemWidgetState extends State<CountItemWidget> {
               width: 80,
               child: FittedBox(
                 child: Text(
-                  '$count',
+                  '${widget.count}',
                   style: _textTheme.subtitle1?.copyWith(fontSize: 32, color: ColorConstant.black),
                 ),
               )
@@ -100,7 +63,6 @@ class CountItemWidgetState extends State<CountItemWidget> {
 
           GestureDetector(
             onTap: () {
-              increase();
               widget.onClickIncrease();
             },
             child: Container(
@@ -126,3 +88,4 @@ class CountItemWidgetState extends State<CountItemWidget> {
     );
   }
 }
+
