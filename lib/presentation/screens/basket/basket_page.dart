@@ -59,7 +59,7 @@ class _BasketPageState extends State<BasketPage> {
                     itemBuilder: (context, index) {
                       BasketObject basket = state.items[index];
                       return Padding(
-                          padding: EdgeInsets.only(top: (index == 0) ? 32 : 0, bottom: (index == 19) ? 150 : 0, left: 16, right: 16),
+                          padding: EdgeInsets.only(top: (index == 0) ? 32 : 0, bottom: (index == (state.items.length - 1)) ? 150 : 0, left: 16, right: 16),
                           child: BasketItem(
                               imagePath: basket.product.images,
                               title: basket.product.productName,

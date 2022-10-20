@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:salaya_delivery_app/core/constants/color_constant.dart';
 import 'package:salaya_delivery_app/core/constants/value_constant.dart';
 import 'package:salaya_delivery_app/data/models/basket_object.dart';
@@ -12,8 +13,10 @@ import 'package:salaya_delivery_app/logic/bloc/branch/branch_bloc.dart';
 import 'package:salaya_delivery_app/logic/bloc/checkout/checkout_bloc.dart';
 import 'package:salaya_delivery_app/presentation/router/route_manager.dart';
 import 'package:salaya_delivery_app/presentation/screens/checkout/widget/item/checkout_item.dart';
+import 'package:salaya_delivery_app/presentation/screens/pdf/pdf_page.dart';
 import 'package:salaya_delivery_app/presentation/utils/function_basket.dart';
 import 'package:salaya_delivery_app/presentation/utils/number_format_extension.dart';
+import 'package:salaya_delivery_app/presentation/utils/permission_handler.dart';
 
 class CheckoutPage extends StatefulWidget {
 
@@ -83,16 +86,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
         shippingType: widget.shippingType
       ),
       child: BlocListener<CheckoutBloc, CheckoutState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is CheckoutApiLoading) {
             //Todo : showLoading
             showLoading(context);
           }
           else if (state is CheckoutApiSuccess) {
-            //Todo : navigate to dashboard page
-            hideLoading(context);
+            //Todo : create pdf file and navigate to dashboard page
+            debugPrint("Start Generate file");
+            await PdfOrderApi.generate(state.order);
             context.read<BasketBloc>().add(RemoveAllBasket());
-            Navigator.of(context).pushNamedAndRemoveUntil(Routes.dashboardRoute, (route) => false);
+            hideLoading(context);
+
+            Navigator.of(context).pushNamedAndRemoveUntil(Routes.dashboardRoute, (route) => false, arguments: true);
           }
           else if (state is CheckoutApiError) {
             //Todo : show error dialog
@@ -473,7 +479,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                                       String text = "";
                                                       if (branchState is BranchLoaded) {
                                                         if (checkoutState is CheckoutLoaded) {
-                                                          context.read<CheckoutBloc>().add(SetBranch(branchId: branchState.branch.branchId));
+                                                          if (checkoutState.comment == null) {
+                                                            context.read<CheckoutBloc>().add(SetBranch(branchId: branchState.branch.branchId));
+                                                          }
                                                         }
                                                         text = branchState.branch.branchName;
                                                       }
@@ -598,7 +606,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                   if (state is BasketLoaded) {
                                     return ElevatedButton(
                                         onPressed: (_controllerAddress.text.isEmpty || _controllerFullName.text.isEmpty || _controllerPhoneNumber.text.isEmpty)
-                                            ? null : () => showDialogConfirmShipping(context, state.items),
+                                            ? null : () async {
+                                          if (await requestPermission(Permission.storage)) {
+                                            showDialogConfirmShipping(context, state.items);
+                                          } else {
+                                            showErrorDialog(context: context, message: "กรุณากด อนุญาต ก่อนดำเนินรายการ");
+                                          }
+                                        },
                                         child: const Text(
                                             "ยืนยันการซื้อสินค้า"
                                         )

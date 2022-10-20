@@ -54,8 +54,13 @@ class CheckoutApiLoading extends CheckoutState {
 }
 
 class CheckoutApiSuccess extends CheckoutState {
+
+  final Order order;
+
+  CheckoutApiSuccess({required this.order});
+
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [order];
 }
 
 class CheckoutApiError extends CheckoutState {

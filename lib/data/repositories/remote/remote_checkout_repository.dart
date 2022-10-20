@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:salaya_delivery_app/core/constants/value_constant.dart';
 import 'package:salaya_delivery_app/data/models/request/checkout_request.dart';
+import 'package:salaya_delivery_app/data/models/response/checkout.dart';
 
 class RemoteCheckoutRepository {
 
@@ -19,7 +20,7 @@ class RemoteCheckoutRepository {
     };
   }
 
-  Future<bool> checkout(CheckoutRequest request) async {
+  Future<Checkout> checkout(CheckoutRequest request) async {
     try {
       final url = Uri.parse(_endpointUrl);
       final response = await http.post(
@@ -29,9 +30,9 @@ class RemoteCheckoutRepository {
       ).timeout(_timeout);
 
       if (response.statusCode == HttpStatus.created) {
-        return true;
+        return CheckoutResponse.fromJson(jsonDecode(response.body)).checkout;
       } else {
-        return false;
+        throw Exception();
       }
     } catch (ex) {
       throw Exception(ex);

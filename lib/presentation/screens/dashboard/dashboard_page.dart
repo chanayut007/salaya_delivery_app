@@ -19,13 +19,26 @@ import 'package:salaya_delivery_app/presentation/utils/function_basket.dart';
 import 'package:salaya_delivery_app/presentation/utils/number_format_extension.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({Key? key}) : super(key: key);
+
+  final bool isSuccessCheckout;
+
+  const DashboardPage({Key? key, this.isSuccessCheckout = false}) : super(key: key);
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+
+  @override
+  void initState() {
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
+      if (widget.isSuccessCheckout) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('บันทึกสลีปเรียบร้อย'), backgroundColor: Colors.green.shade800,));
+      }
+    });
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {

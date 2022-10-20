@@ -6,6 +6,8 @@ import 'package:meta/meta.dart';
 import 'package:salaya_delivery_app/data/models/basket_object.dart';
 import 'package:salaya_delivery_app/data/models/request/checkout_request.dart';
 import 'package:salaya_delivery_app/data/models/request/item_request.dart';
+import 'package:salaya_delivery_app/data/models/response/checkout.dart';
+import 'package:salaya_delivery_app/data/models/response/order.dart';
 import 'package:salaya_delivery_app/data/models/response/product.dart';
 import 'package:salaya_delivery_app/data/models/shipping_type.dart';
 import 'package:salaya_delivery_app/data/repositories/remote/remote_checkout_repository.dart';
@@ -65,7 +67,7 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     try {
       emit(CheckoutApiLoading());
 
-      List<ItemRequest> items = [];
+      List<ItemRequest> itemsRequest = [];
       for (BasketObject basket in event.baskets) {
         final item = ItemRequest(
             itemNo: basket.product.productId,
@@ -73,10 +75,10 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
             qty: basket.qty,
             pricePerUnit: basket.product.pricePerUnit
         );
-        items.add(item);
+        itemsRequest.add(item);
       }
 
-      bool isSuccess = await remoteCheckoutRepository.checkout(
+      Checkout checkout = await remoteCheckoutRepository.checkout(
           CheckoutRequest(
             customerName: state.fullName!,
             customerPhone: state.phoneNumber!,
@@ -84,11 +86,36 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
             address: state.address!,
             shipTo: (state.shippingType == ShippingType.SHIPPING) ? "S" : "D" ,
             branchShipping: state.branchShipping!,
-            items: items
+            items: itemsRequest
           )
       );
 
-      emit(CheckoutApiSuccess());
+      List<Item> items = [];
+
+      for(BasketObject basket in event.baskets) {
+        final item = Item(
+          itemNo: basket.product.productId,
+          itemName: basket.product.productName,
+          pricePerUnit: basket.product.pricePerUnit,
+          qty: basket.qty,
+          totalPrice: (basket.qty * basket.product.pricePerUnit)
+        );
+        items.add(item);
+      }
+
+      Order order = Order(
+        orderNo: checkout.orderNo,
+        customerName: state.fullName!,
+        customerPhone: state.phoneNumber!,
+        address: state.address!,
+        comment: state.comment,
+        shipTo: (state.shippingType == ShippingType.SHIPPING) ? "จัดส่งทางพัสดุไปรษณีย์" : "จัดส่งภายใน 4 ชม.",
+        branchShipping: state.branchShipping!,
+        date: checkout.checkoutDate,
+        items: items
+      );
+
+      emit(CheckoutApiSuccess(order: order));
     } catch (ex) {
       emit(CheckoutApiError(message: ex.toString()));
       emit(state);

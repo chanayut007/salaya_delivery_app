@@ -24,6 +24,9 @@ class RouteGenerator {
     final args = settings.arguments;
     switch(settings.name) {
       case Routes.dashboardRoute:
+        if (args is bool) {
+          return MaterialPageRoute(builder: (_) => DashboardPage(isSuccessCheckout: args,));
+        }
         return MaterialPageRoute(builder: (_) => const DashboardPage());
       case Routes.basketRoute:
         return MaterialPageRoute(builder: (_) => const BasketPage());
